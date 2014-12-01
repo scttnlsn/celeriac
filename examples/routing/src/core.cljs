@@ -27,7 +27,7 @@
 
 (def state (atom (celeriac/initial-state channels)))
 
-(defroutes
+(defroutes routes
   (celeriac/channel channels :nav)
   {:foo "/foo"
    :bar "/bar"
