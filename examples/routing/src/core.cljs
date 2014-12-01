@@ -26,11 +26,20 @@
 
 (def state (atom (celeriac/initial-state channels)))
 
-(routing/routes (celeriac/channel channels :nav)
-                {:foo "/foo"
-                 :bar "/bar"
-                 :baz "/baz/:id"})
+(def routes (routing/routes (celeriac/channel channels :nav)
+                            {:foo "/foo"
+                             :bar "/bar"
+                             :baz "/baz/:id"}))
+
+(println "paths:"
+         (routing/path routes :foo)
+         (routing/path routes :bar)
+         (routing/path routes :baz {:id 123}))
+
+(routing/redirect! history (routing/path routes :foo))
 
 (secretary/set-config! :prefix "#")
 (routing/start-history! history)
 (celeriac/start! channels state)
+
+(celeriac/repl-connect!)
