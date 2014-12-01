@@ -1,22 +1,36 @@
 (ns examples.routing.core
-  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [<! chan]]
             [secretary.core :as secretary]
+            [celeriac.core :as celeriac]
             [celeriac.routing :as routing]))
 
 (enable-console-print!)
 
-(def nav-ch (chan))
+(defmulti navigate!
+  (fn [[route params] state] route))
+
+(defmethod navigate! :default
+  [[name _] state]
+  (assoc state :route name))
+
+(defmethod navigate! :baz
+  [[name {:keys [id]}] state]
+  ;(put! api-ch [:fetch-baz {:id id}])
+  (-> state
+      (assoc :route name)
+      (assoc :baz id)))
 
 (def history (routing/create-history))
 
-(routing/routes nav-ch {:foo "/foo"
-                        :bar "/bar"
-                        :baz "/baz/:id"})
+(def channels (celeriac/make-channels {:nav navigate!}))
+
+(def state (atom (celeriac/initial-state channels)))
+
+(routing/routes (celeriac/channel channels :nav)
+                {:foo "/foo"
+                 :bar "/bar"
+                 :baz "/baz/:id"})
 
 (secretary/set-config! :prefix "#")
 (routing/start-history! history)
-
-(go
-  (while true
-    (println (<! nav-ch))))
+(celeriac/start! channels state)
