@@ -1,36 +1,51 @@
 (ns examples.basic.core
-  (:require [cljs.core.async :refer [put!]]
-            [celeriac.core :as celeriac]))
+  (:require-macros [cljs.core.async.macros :refer [go-loop]])
+  (:require [celeriac.core :as celeriac]))
 
 (enable-console-print!)
 
-; Channel handlers:
-; - accept a value from a channel and the current app state
-; - return a new app state
-; - may have other side effects
+;; --------------------------------------------------
+;; Handlers:
+;; - accept a dispatched value and the current app state
+;; - optional accept map of shared data
+;; - return a new app state
+;; - may have other side effects (such as dispatching a new value)
 
-(defn foo [value state]
-  (let [bar-ch (get-in state [:channels :bar])]
-    (put! bar-ch "quux")
-    (assoc state :foo value)))
+(defn foo [value state {:keys [dispatcher]}]
+  (celeriac/dispatch! dispatcher :bar "quux")
+  (assoc state :foo value))
 
 (defn bar [value state]
   (assoc state :bar value))
 
-; main
+;; --------------------------------------------------
+;; Globals
 
-(def channels (celeriac/make-channels {:foo foo
-                                       :bar bar}))
+(def state (atom {}))
 
-(def state (atom (celeriac/initial-state channels)))
+(def dispatcher (celeriac/dispatcher {:foo foo
+                                      :bar bar}))
 
-(celeriac/start! channels state)
+;; --------------------------------------------------
+;; Main
 
-; Invoking handlers:
-; - values are read off control channels
-; - corresponding handlers are called
-; - app state is swapped w/ new state returned from handler
-(put! (celeriac/channel channels :foo) "baz")
-(put! (celeriac/channel channels :bar) "qux")
+;; Listen to all dispatched values
+(let [ch (celeriac/listen-all dispatcher)]
+  (go-loop []
+    (if-let [val (<! ch)]
+      (do
+        (println "dispatch:" val)
+        (recur)))))
 
-(celeriac/repl-connect!)
+;; Start dispatcher
+(celeriac/start! dispatcher
+                 state
+                 {:dispatcher dispatcher})
+
+;; Dispatch some values
+;; - corresponding handlers will be called async
+(celeriac/dispatch! dispatcher :foo "baz")
+(celeriac/dispatch! dispatcher :bar "qux")
+
+;; Dev
+#_(celeriac/repl-connect!)

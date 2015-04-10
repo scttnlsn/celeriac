@@ -1,5 +1,6 @@
 (ns examples.routing.core
-  (:require-macros [celeriac.routing :refer [defroutes]])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]
+                   [celeriac.routing :refer [defroutes]])
   (:require [cljs.core.async :refer [<! chan]]
             [secretary.core :as secretary]
             [celeriac.core :as celeriac]
@@ -7,8 +8,12 @@
 
 (enable-console-print!)
 
+;; --------------------------------------------------
+;; Handlers
+
 (defmulti navigate!
-  (fn [[route params] state] route))
+  (fn [[route params] state]
+    route))
 
 (defmethod navigate! :default
   [[name _] state]
@@ -16,32 +21,60 @@
 
 (defmethod navigate! :baz
   [[name {:keys [id]}] state]
-  ;(put! api-ch [:fetch-baz {:id id}])
   (-> state
-      (assoc :route name)
-      (assoc :baz id)))
+    (assoc :route name)
+    (assoc :baz id)))
+
+;; --------------------------------------------------
+;; Globals
+
+(def state (atom {}))
+
+(def dispatcher (celeriac/dispatcher {:nav navigate!}))
 
 (def history (routing/create-history))
 
-(def channels (celeriac/make-channels {:nav navigate!}))
+;; --------------------------------------------------
+;; Routing
 
-(def state (atom (celeriac/initial-state channels)))
+(defn dispatch-route! [route]
+  (celeriac/dispatch! dispatcher :nav route))
 
 (defroutes routes
-  (celeriac/channel channels :nav)
-  {:foo "/foo"
+  dispatch-route!
+  {:home "/"
+   :foo "/foo"
    :bar "/bar"
-   :baz "/baz/:id"})
+   :baz "/baz/:id"
+   :not-found "*"})
 
 (println "paths:"
          (foo-path)
          (bar-path)
          (baz-path {:id 123}))
 
-(routing/redirect! history (foo-path))
-
 (secretary/set-config! :prefix "#")
-(routing/start-history! history)
-(celeriac/start! channels state)
 
-(celeriac/repl-connect!)
+;; Start listening to history events
+;; and dispatch a new route each time
+;; the URL changes
+(routing/start-history! history)
+
+;; --------------------------------------------------
+;; Main
+
+;; Listen to all dispatched values
+(let [ch (celeriac/listen-all dispatcher)]
+  (go-loop []
+    (if-let [val (<! ch)]
+      (do
+        (println "dispatch:" val)
+        (recur)))))
+
+;; Start the dispatcher
+(celeriac/start! dispatcher
+                 state
+                 {:dispatcher dispatcher})
+
+;; Dev
+#_(celeriac/repl-connect!)

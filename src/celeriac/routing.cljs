@@ -4,17 +4,17 @@
   (:import goog.History
            goog.history.EventType))
 
-(defn route-handler [name ch]
+(defn route-handler [name dispatch-fn]
   (fn [params]
-    (put! ch [name params])))
+    (dispatch-fn [name params])))
 
 (defn path [routes name & [params]]
   (let [route (get routes name)]
     (secretary/render-route route params)))
 
-(defn routes [ch routes]
+(defn routes [dispatch-fn routes]
   (doseq [[name route] routes]
-    (secretary/add-route! route (route-handler name ch)))
+    (secretary/add-route! route (route-handler name dispatch-fn)))
   routes)
 
 (defn strip-slash [s]
@@ -27,9 +27,9 @@
 
 (defn- on-navigate [e]
   (-> e
-      (.-token)
-      (strip-slash)
-      (secretary/dispatch!)))
+    (.-token)
+    (strip-slash)
+    (secretary/dispatch!)))
 
 (defn start-history! [history]
   (goog.events/listen history

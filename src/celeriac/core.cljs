@@ -1,44 +1,52 @@
 (ns celeriac.core
   (:require-macros [cljs.core.async.macros :refer [go alt!]])
-  (:require [cljs.core.async :refer [chan]]
+  (:require [cljs.core.async :as async :refer [chan merge mult pipe put! tap]]
             [weasel.repl :as ws-repl]))
 
-(defn log! [title value]
-  (.log js/console
-        (str "%c " (name title) ":")
-        "font-weight: bold"
-        (clj->js value)))
-
 (defn- wrap-handler [handler]
-  (fn [name value state]
-    (log! name value)
-    (swap! state (partial handler value))
-    (log! :state @state)))
+  (fn [name value state opts]
+    (swap! state #(handler value % opts))))
 
-(defn make-channels [handlers]
+(defn dispatcher [handlers]
   (into {} (for [[name handler] handlers]
-             [name {:ch (chan)
-                    :name name
-                    :handler (wrap-handler handler)}])))
+             (let [ch (chan)]
+               [name {:ch ch
+                      :mult-ch (mult ch)
+                      :name name
+                      :handler (wrap-handler handler)}]))))
 
-(defn channel [channels name]
-  (get-in channels [name :ch]))
+(defn channel [dispatcher name]
+  (get-in dispatcher [name :ch]))
 
-(defn channel-map [channels]
-  (into {} (for [[name {:keys [ch]}] channels]
-             [name ch])))
+(defn tap-channels [dispatcher]
+  (into {} (for [[_ {:keys [mult-ch] :as item}] dispatcher]
+             (let [tapped-ch (chan)]
+               (tap mult-ch tapped-ch)
+               [tapped-ch item]))))
 
-(defn initial-state [channels]
-  {:channels (channel-map channels)})
-
-(defn start! [channels state]
-  (let [ch-index (into {} (for [[_ {:keys [ch] :as val}] channels]
-                            [ch val]))]
+(defn start! [dispatcher state opts]
+  (let [channels (tap-channels dispatcher)]
     (go
       (while true
-        (let [[value ch] (alts! (keys ch-index))
-              {:keys [name handler]} (get ch-index ch)]
-          (handler name value state))))))
+        (let [[value ch] (alts! (keys channels))
+              {:keys [name handler]} (get channels ch)]
+          (handler name value state opts))))))
+
+(defn dispatch! [dispatcher name value]
+  (let [ch (get-in dispatcher [name :ch])]
+    (put! ch value)))
+
+(defn listen [dispatcher name]
+  (let [mult-ch (get-in dispatcher [name :mult-ch])
+        ch (chan)]
+    (tap mult-ch ch)
+    ch))
+
+(defn listen-all [dispatcher]
+  (let [channels (for [name (keys dispatcher)]
+                   (pipe (listen dispatcher name)
+                         (chan 1 (map (fn [val] [name val])))))]
+    (merge (doall channels))))
 
 (defn repl-connect! []
   (ws-repl/connect "ws://localhost:9001" :verbose true))
