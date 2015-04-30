@@ -46,7 +46,7 @@
   (let [channels (for [name (keys dispatcher)]
                    (pipe (listen dispatcher name)
                          (chan 1 (map (fn [val] [name val])))))]
-    (merge (doall channels))))
+    (merge (doall (reverse channels)))))
 
 (defn repl-connect! []
   (ws-repl/connect "ws://localhost:9001" :verbose true))
