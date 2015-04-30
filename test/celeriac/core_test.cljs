@@ -10,16 +10,18 @@
 (defn- test-handler [value state]
   (assoc state :value value))
 
-(deftest dispatcher
-  (testing "it dispatches values from single channel to listeners"
+(deftest listen
+  (testing "it receives values dispatched to given channel"
     (async done
            (let [dispatcher (celeriac/dispatcher {:test test-handler})
                  ch (celeriac/listen dispatcher :test)]
              (go
                (is (= (<! ch) :foo))
                (done))
-             (celeriac/dispatch! dispatcher :test :foo))))
-  (testing "it dispatches value from all channels to listeners"
+             (celeriac/dispatch! dispatcher :test :foo)))))
+
+(deftest listen-all
+  (testing "it receives values dispatched to any channel"
     (async done
            (let [dispatcher (celeriac/dispatcher {:a test-handler
                                                   :b test-handler})
@@ -31,11 +33,11 @@
              (celeriac/dispatch! dispatcher :a :foo)
              (celeriac/dispatch! dispatcher :b :bar)))))
 
-(deftest handler
-  (testing "it updates state atom"
+(deftest start
+  (testing "it updates state atom with result of handler"
     (async done
            (let [state (atom {})
-                 dispatcher (celeriac/dispatcher {:test #(assoc %2 :value %1)})]
+                 dispatcher (celeriac/dispatcher {:test handler})]
              (go
                (<! (timeout 100))
                (is (= (:value @state) :foo)))
