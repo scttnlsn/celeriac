@@ -37,7 +37,7 @@
   (testing "it updates state atom with result of handler"
     (async done
            (let [state (atom {})
-                 dispatcher (celeriac/dispatcher {:test handler})]
+                 dispatcher (celeriac/dispatcher {:test test-handler})]
              (go
                (<! (timeout 100))
                (is (= (:value @state) :foo)))
