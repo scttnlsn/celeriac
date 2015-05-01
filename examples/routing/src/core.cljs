@@ -1,10 +1,9 @@
 (ns examples.routing.core
-  (:require-macros [cljs.core.async.macros :refer [go-loop]]
-                   [celeriac.routing :refer [defroutes]])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]])
   (:require [cljs.core.async :refer [<! chan]]
             [secretary.core :as secretary]
             [celeriac.core :as celeriac]
-            [celeriac.routing :as routing]))
+            [celeriac.routing :as routing :refer-macros [defroutes]]))
 
 (enable-console-print!)
 

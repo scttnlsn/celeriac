@@ -1,8 +1,7 @@
 (ns celeriac.core-test
-  (:require-macros [cljs.core.async.macros :refer [go]]
-                   [cljs.test :refer [async deftest is run-tests testing]])
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [<! timeout]]
-            [cljs.test :as test]
+            [cljs.test :as test :refer-macros [async deftest is run-tests testing]]
             [celeriac.core :as celeriac]))
 
 (enable-console-print!)

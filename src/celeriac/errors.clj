@@ -13,8 +13,8 @@
         body (drop 2 form)]
     `(catch js/Error e#
        (let [~binding (celeriac.errors/info e#)]
-         ~(match [binding]
-                 `~@body)))))
+         (cljs.core.match/match [~binding]
+                                ~@body)))))
 
 (defn- parse-try+ [body]
   (for [form body]

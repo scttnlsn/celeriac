@@ -1,5 +1,6 @@
 (ns celeriac.errors-test
-  (:require [cljs.test :as test :refer-macros [async deftest is run-tests testing]]
+  (:require [cljs.core.match :refer-macros [match]]
+            [cljs.test :as test :refer-macros [async deftest is run-tests testing]]
             [celeriac.errors :refer [throw+] :refer-macros [try+]]))
 
 (deftest errors

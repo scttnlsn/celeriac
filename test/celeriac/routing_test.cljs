@@ -1,11 +1,9 @@
 (ns celeriac.routing-test
-  (:require-macros [cljs.core.async.macros :refer [go]]
-                   [cljs.test :refer [async deftest is run-tests testing]]
-                   [celeriac.routing :refer [defroutes]])
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [<! timeout]]
-            [cljs.test :as test]
+            [cljs.test :as test :refer-macros [async deftest is run-tests testing]]
             [celeriac.core :as celeriac]
-            [celeriac.routing :as routing]))
+            [celeriac.routing :as routing :refer-macros [defroutes]]))
 
 (enable-console-print!)
 

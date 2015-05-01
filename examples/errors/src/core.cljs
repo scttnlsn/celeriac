@@ -1,8 +1,6 @@
 (ns examples.errors.core
-  (:require-macros [celeriac.errors :refer [try+]]
-                   [cljs.core.match.macros :refer [match]])
-  (:require [cljs.core.match]
-            [celeriac.errors :refer [info make-error maybe-throw throw+]]))
+  (:require [cljs.core.match :refer-macros [match]]
+            [celeriac.errors :refer [info make-error maybe-throw throw+] :refer-macros [try+]]))
 
 (enable-console-print!)
 
