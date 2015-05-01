@@ -1,4 +1,5 @@
-(ns celeriac.errors)
+(ns celeriac.errors
+  (:require [cljs.core.match :refer-macros [match]]))
 
 (defn- parse-catch [form]
   (let [binding (second form)
@@ -12,8 +13,8 @@
         body (drop 2 form)]
     `(catch js/Error e#
        (let [~binding (celeriac.errors/info e#)]
-         (cljs.core.match.macros/match [~binding]
-                                       ~@body)))))
+         ~(match [binding]
+                 `~@body)))))
 
 (defn- parse-try+ [body]
   (for [form body]
