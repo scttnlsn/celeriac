@@ -16,5 +16,3 @@
                            (catch+ e
                                    [{:foo "baz"}] ()
                                    :else (throw+ e)))))))
-
-(run-tests)

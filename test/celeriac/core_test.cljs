@@ -42,5 +42,3 @@
                (is (= (:value @state) :foo)))
              (celeriac/start! dispatcher state {})
              (celeriac/dispatch! dispatcher :test :foo)))))
-
-(run-tests)

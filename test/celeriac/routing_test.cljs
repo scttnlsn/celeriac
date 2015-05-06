@@ -42,5 +42,3 @@
 
              (routing/redirect! history (home-path))
              (done)))))
-
-(run-tests)
