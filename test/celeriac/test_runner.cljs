@@ -23,7 +23,7 @@
        (f failures)))))
 
 (defn run []
-  (test/run-tests
+  (run-tests
    (test/empty-env ::test/default)
    'celeriac.core-test
    'celeriac.errors-test

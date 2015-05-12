@@ -39,6 +39,7 @@
                  dispatcher (celeriac/dispatcher {:test test-handler})]
              (go
                (<! (timeout 100))
-               (is (= (:value @state) :foo)))
+               (is (= (:value @state) :foo))
+               (done))
              (celeriac/start! dispatcher state {})
              (celeriac/dispatch! dispatcher :test :foo)))))
