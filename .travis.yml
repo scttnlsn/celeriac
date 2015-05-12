@@ -1,2 +1,2 @@
-lein: lein
+language: clojure
 script: lein cljsbuild test
