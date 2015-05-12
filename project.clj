@@ -31,4 +31,6 @@
              :compiler {:output-to "examples/out/examples.js"
                         :output-dir "examples/out"
                         :source-map true
-                        :optimizations :none}}]})
+                        :optimizations :none}}]
+
+   :test-commands {"test" ["phantomjs" "test/phantom-test.js"]}})

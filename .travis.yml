@@ -1,0 +1,2 @@
+lein: lein
+script: lein cljsbuild test
