@@ -1,8 +1,9 @@
 (ns celeriac.routing
   (:require [cljs.core.async :refer [put!]]
+            [goog.events :as events]
+            [goog.history.EventType :as EventType]
             [secretary.core :as secretary])
-  (:import goog.History
-           goog.history.EventType))
+  (:import goog.History))
 
 (defn route-handler [name dispatch-fn]
   (fn [params]
@@ -27,14 +28,14 @@
 
 (defn- on-navigate [e]
   (-> e
-    (.-token)
-    (strip-slash)
-    (secretary/dispatch!)))
+      (.-token)
+      (strip-slash)
+      (secretary/dispatch!)))
 
 (defn start-history! [history]
-  (goog.events/listen history
-                      EventType/NAVIGATE
-                      on-navigate)
+  (events/listen history
+                 EventType/NAVIGATE
+                 on-navigate)
   (.setEnabled history true))
 
 (defn redirect! [history path]
