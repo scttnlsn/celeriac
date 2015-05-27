@@ -3,7 +3,8 @@
   (:require [cljs.core.async :refer [<! chan]]
             [secretary.core :as secretary]
             [celeriac.core :as celeriac]
-            [celeriac.routing :as routing :refer-macros [defroutes]]))
+            [celeriac.routing :as routing :refer-macros [defroutes]]
+            [celeriac.dev :refer [repl-connect!]]))
 
 (enable-console-print!)
 
@@ -76,4 +77,4 @@
                  {:dispatcher dispatcher})
 
 ;; Dev
-#_(celeriac/repl-connect!)
+#_(repl-connect!)

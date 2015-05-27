@@ -1,6 +1,7 @@
 (ns examples.errors.core
   (:require [cljs.core.match :refer-macros [match]]
-            [celeriac.errors :refer [info make-error maybe-throw throw+] :refer-macros [try+]]))
+            [celeriac.errors :refer [info make-error maybe-throw throw+] :refer-macros [try+]]
+            [celeriac.dev :refer [repl-connect!]]))
 
 (enable-console-print!)
 
@@ -45,3 +46,5 @@
          [{:foo "baz"}] (throw+ e)
          [{:foo _}] (println "try+/catch+ caught:" e)
          :else (throw+ e)))
+
+#_(repl-connect!)

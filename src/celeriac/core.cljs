@@ -1,7 +1,6 @@
 (ns celeriac.core
   (:require-macros [cljs.core.async.macros :refer [go alt!]])
-  (:require [cljs.core.async :as async :refer [chan merge mult pipe put! tap]]
-            [weasel.repl :as ws-repl]))
+  (:require [cljs.core.async :as async :refer [chan merge mult pipe put! tap]]))
 
 (defn- wrap-handler [handler]
   (fn [name value state opts]
@@ -47,6 +46,3 @@
                    (pipe (listen dispatcher name)
                          (chan 1 (map (fn [val] [name val])))))]
     (merge (doall (reverse channels)))))
-
-(defn repl-connect! []
-  (ws-repl/connect "ws://localhost:9001" :verbose true))

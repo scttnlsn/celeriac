@@ -1,6 +1,7 @@
 (ns examples.basic.core
   (:require-macros [cljs.core.async.macros :refer [go-loop]])
-  (:require [celeriac.core :as celeriac]))
+  (:require [celeriac.core :as celeriac]
+            [celeriac.dev :refer [repl-connect!]]))
 
 (enable-console-print!)
 
@@ -48,4 +49,4 @@
 (celeriac/dispatch! dispatcher :bar "qux")
 
 ;; Dev
-#_(celeriac/repl-connect!)
+#_(repl-connect!)
