@@ -23,13 +23,16 @@
                (tap mult-ch tapped-ch)
                [tapped-ch item]))))
 
-(defn start! [dispatcher state opts]
-  (let [channels (tap-channels dispatcher)]
-    (go
-      (while true
-        (let [[value ch] (alts! (keys channels))
-              {:keys [name handler]} (get channels ch)]
-          (handler name value state opts))))))
+(defn start!
+  ([dispatcher state]
+   (start! dispatcher state {}))
+  ([dispatcher state opts]
+   (let [channels (tap-channels dispatcher)]
+     (go
+       (while true
+         (let [[value ch] (alts! (keys channels))
+               {:keys [name handler]} (get channels ch)]
+           (handler name value state opts)))))))
 
 (defn dispatch! [dispatcher name value]
   (let [ch (get-in dispatcher [name :ch])]
