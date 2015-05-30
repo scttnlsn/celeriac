@@ -1,5 +1,5 @@
 (ns celeriac.dev
-  (:require [weasel.repl :as ws-repl]))
+  (:require [clojure.browser.repl :as repl]))
 
 (defn repl-connect! []
-  (ws-repl/connect "ws://localhost:9001" :verbose true))
+  (repl/connect "http://localhost:9000/repl"))

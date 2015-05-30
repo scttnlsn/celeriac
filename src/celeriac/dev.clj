@@ -1,9 +1,10 @@
 (ns celeriac.dev
-  (:require [cemerick.piggieback :as piggieback]
-            [weasel.repl.websocket :as weasel]))
+  (:require [cljs.repl :as repl]
+            [cljs.repl.browser :as browser]))
 
 (defn browser-repl []
-  (piggieback/cljs-repl
-   (weasel/repl-env :ip "0.0.0.0" :port 9001)))
+  (repl/repl (browser/repl-env)))
 
-(comment (celeriac.dev/browser-repl))
+(comment
+  (browser-repl)
+  )
