@@ -13,15 +13,17 @@
   (testing "it dispatches and handles actions"
     (async done
            (let [store (celeriac/create-store test-handler)]
-             (celeriac/subscribe store (fn [db]
-                                         (is (= db {:foo :bar}))
+             (celeriac/subscribe store (fn [action before-state after-state]
+                                         (is (= action {:foo :bar}))
+                                         (is (= before-state {}))
+                                         (is (= after-state {:foo :bar}))
                                          (done)))
              (celeriac/dispatch! store {:foo :bar}))))
   (testing "it handles async actions"
     (async done
            (let [store (celeriac/create-store test-handler)]
-             (celeriac/subscribe store (fn [db]
-                                         (is (= db {:foo :bar}))
+             (celeriac/subscribe store (fn [_ _ after-state]
+                                         (is (= after-state {:foo :bar}))
                                          (done)))
              (celeriac/dispatch! store (fn [dispatch]
                                          (go
@@ -43,8 +45,8 @@
     (async done
            (let [store (celeriac/create-store (-> test-handler
                                                   (test-middleware)))]
-             (celeriac/subscribe store (fn [db]
-                                         (is (= db {:middleware true
-                                                    :foo :bar}))
+             (celeriac/subscribe store (fn [_ _ after-state]
+                                         (is (= after-state {:middleware true
+                                                             :foo :bar}))
                                          (done)))
              (celeriac/dispatch! store {:foo :bar})))))

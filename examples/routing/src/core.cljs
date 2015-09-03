@@ -12,13 +12,13 @@
 ;; Handlers
 
 (defmulti handler
-  (fn [db action]
+  (fn [state action]
     (first action)))
 
 (defmethod handler :navigate
-  [db [_ name params]]
-  (assoc db :route {:name name
-                    :params params}))
+  [state [_ name params]]
+  (assoc state :route {:name name
+                       :params params}))
 
 ;; --------------------------------------------------
 ;; Routing
@@ -50,7 +50,7 @@
 
 (def store (celeriac/create-store handler))
 
-(celeriac/subscribe store #(println "route:" (:route %)))
+(celeriac/subscribe store #(println "route:" (:route %3)))
 
 (install-routes store)
 (start-router)

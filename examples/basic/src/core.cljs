@@ -11,16 +11,16 @@
 ;; - return a new app state
 
 (defmulti handler
-  (fn [db action]
+  (fn [state action]
     (first action)))
 
 (defmethod handler :foo
-  [db [_ value]]
-  (assoc db :foo value))
+  [state [_ value]]
+  (assoc state :foo value))
 
 (defmethod handler :bar
-  [db [_ value]]
-  (assoc db :bar value))
+  [state [_ value]]
+  (assoc state :bar value))
 
 ;; --------------------------------------------------
 ;; Middleware functions
@@ -29,9 +29,9 @@
 ;; - return a new handler
 
 (defn logger [handler]
-  (fn [db action]
-    (println "action:" action)
-    (handler db action)))
+  (fn [state action]
+    (println "logger:" [state action])
+    (handler state action)))
 
 ;; --------------------------------------------------
 ;; Main
@@ -40,8 +40,11 @@
                                       (logger))))
 
 (celeriac/subscribe store
-                    (fn [db]
-                      (println "db:" db)))
+                    (fn [action before after]
+                      (println "---")
+                      (println "state:" before)
+                      (println "action:" action)
+                      (println "state:" after)))
 
 (celeriac/dispatch! store [:foo "baz"])
 (celeriac/dispatch! store [:bar "qux"])

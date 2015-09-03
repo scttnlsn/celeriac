@@ -10,16 +10,16 @@
 ;; Handlers
 
 (defmulti handler
-  (fn [db action]
+  (fn [state action]
     (first action)))
 
 (defmethod handler :foo
-  [db [_ value]]
-  (assoc db :foo value))
+  [state [_ value]]
+  (assoc state :foo value))
 
 (defmethod handler :bar
-  [db [_ value]]
-  (assoc db :bar value))
+  [state [_ value]]
+  (assoc state :bar value))
 
 ;; --------------------------------------------------
 ;; Actions
@@ -42,8 +42,11 @@
 (def store (celeriac/create-store handler))
 
 (celeriac/subscribe store
-                    (fn [db]
-                      (println "db:" db)))
+                    (fn [action before after]
+                      (println "---")
+                      (println "state:" before)
+                      (println "action:" action)
+                      (println "state:" after)))
 
 (celeriac/dispatch! store (foo "baz"))
 (celeriac/dispatch! store (bar "qux"))

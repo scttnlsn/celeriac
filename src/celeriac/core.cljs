@@ -6,9 +6,10 @@
   (put! actions action))
 
 (defn dispatch-sync! [{:keys [db handler subscribers] :as store} action]
-  (swap! db #(handler % action))
-  (doall (for [f @subscribers]
-           (f @db))))
+  (let [before-state @db]
+    (swap! db #(handler % action))
+    (doall (for [f @subscribers]
+             (f action before-state @db)))))
 
 (defprotocol IHandleAction
   (-handle-action! [action store]))
