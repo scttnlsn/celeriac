@@ -3,7 +3,7 @@ celeriac
 
 [![Build Status](https://travis-ci.org/scttnlsn/celeriac.svg)](https://travis-ci.org/scttnlsn/celeriac)
 
-State management for ClojureScript applications.  Inspired by [Redux](https://github.com/rackt/redux) and [re-frame](https://github.com/Day8/re-frame).
+State management for ClojureScript applications inspired by [Redux](https://github.com/rackt/redux) and [re-frame](https://github.com/Day8/re-frame).
 
 Examples:
 
