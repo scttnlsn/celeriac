@@ -1,80 +1,61 @@
 (ns examples.routing.core
   (:require-macros [cljs.core.async.macros :refer [go-loop]])
   (:require [cljs.core.async :refer [<! chan]]
-            [secretary.core :as secretary]
+            [goog.events :as events]
+            [goog.history.EventType :as EventType]
+            [secretary.core :as secretary :refer-macros [defroute]]
             [celeriac.core :as celeriac]
-            [celeriac.routing :as routing :refer-macros [defroutes]]
-            [celeriac.dev :refer [repl-connect!]]))
+            [celeriac.dev :refer [repl-connect!]])
+  (:import goog.History))
 
 (enable-console-print!)
 
 ;; --------------------------------------------------
 ;; Handlers
 
-(defmulti navigate!
-  (fn [[route params] state]
-    route))
+(defmulti handler
+  (fn [db action]
+    (first action)))
 
-(defmethod navigate! :default
-  [[name _] state]
-  (assoc state :route name))
-
-(defmethod navigate! :baz
-  [[name {:keys [id]}] state]
-  (-> state
-    (assoc :route name)
-    (assoc :baz id)))
-
-;; --------------------------------------------------
-;; Globals
-
-(def state (atom {}))
-
-(def dispatcher (celeriac/dispatcher {:nav navigate!}))
-
-(def history (routing/create-history))
+(defmethod handler :navigate
+  [db [_ name params]]
+  (assoc db :route {:name name
+                    :params params}))
 
 ;; --------------------------------------------------
 ;; Routing
 
-(defn dispatch-route! [route]
-  (celeriac/dispatch! dispatcher :nav route))
-
-(defroutes routes
-  dispatch-route!
-  {:home "/"
-   :foo "/foo"
-   :bar "/bar"
-   :baz "/baz/:id"
-   :not-found "*"})
-
-(println "paths:"
-         (foo-path)
-         (bar-path)
-         (baz-path {:id 123}))
+(declare store)
 
 (secretary/set-config! :prefix "#")
 
-;; Start listening to history events
-;; and dispatch a new route each time
-;; the URL changes
-(routing/start-history! history)
+(def routes
+  {:home "/"
+   :foo "/foo"
+   :bar "/bar"
+   :baz "/baz/:id"})
+
+(defn install-routes [store]
+  (doseq [[name path] (into [] routes)]
+    (secretary/add-route! path #(celeriac/dispatch! store [:navigate name %]))))
+
+(defn start-router []
+  (let [history (History.)]
+    (goog.events/listen history
+                        EventType/NAVIGATE
+                        #(secretary/dispatch! (.-token %)))
+    (.setEnabled history true)
+    history))
 
 ;; --------------------------------------------------
 ;; Main
 
-;; Listen to all dispatched values
-(let [ch (celeriac/listen-all dispatcher)]
-  (go-loop []
-    (if-let [val (<! ch)]
-      (do
-        (println "dispatch:" val)
-        (recur)))))
+(def store (celeriac/create-store handler))
 
-;; Start the dispatcher
-(celeriac/start! dispatcher
-                 state
-                 {:dispatcher dispatcher})
+(celeriac/subscribe store #(println "route:" (:route %)))
+
+(install-routes store)
+(start-router)
 
 ;; Dev
 #_(repl-connect!)

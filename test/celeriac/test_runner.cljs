@@ -1,8 +1,6 @@
 (ns celeriac.test-runner
   (:require [cljs.test :as test :refer [report] :refer-macros [run-tests]]
-            [celeriac.core-test]
-            [celeriac.errors-test]
-            [celeriac.routing-test]))
+            [celeriac.core-test]))
 
 (enable-console-print!)
 
@@ -25,6 +23,4 @@
 (defn run []
   (run-tests
    (test/empty-env ::test/default)
-   'celeriac.core-test
-   'celeriac.errors-test
-   'celeriac.routing-test))
+   'celeriac.core-test))

@@ -6,47 +6,46 @@
 (enable-console-print!)
 
 ;; --------------------------------------------------
-;; Handlers:
-;; - accept a dispatched value and the current app state
-;; - optional accept map of shared data
+;; Handler functions
+;;
+;; - accept current app state and action
 ;; - return a new app state
-;; - may have other side effects (such as dispatching a new value)
 
-(defn foo [value state {:keys [dispatcher]}]
-  (celeriac/dispatch! dispatcher :bar "quux")
-  (assoc state :foo value))
+(defmulti handler
+  (fn [db action]
+    (first action)))
 
-(defn bar [value state]
-  (assoc state :bar value))
+(defmethod handler :foo
+  [db [_ value]]
+  (assoc db :foo value))
+
+(defmethod handler :bar
+  [db [_ value]]
+  (assoc db :bar value))
 
 ;; --------------------------------------------------
-;; Globals
+;; Middleware functions
+;;
+;; - accept a handler
+;; - return a new handler
 
-(def state (atom {}))
-
-(def dispatcher (celeriac/dispatcher {:foo foo
-                                      :bar bar}))
+(defn logger [handler]
+  (fn [db action]
+    (println "action:" action)
+    (handler db action)))
 
 ;; --------------------------------------------------
 ;; Main
 
-;; Listen to all dispatched values
-(let [ch (celeriac/listen-all dispatcher)]
-  (go-loop []
-    (if-let [val (<! ch)]
-      (do
-        (println "dispatch:" val)
-        (recur)))))
+(def store (celeriac/create-store (-> handler
+                                      (logger))))
 
-;; Start dispatcher
-(celeriac/start! dispatcher
-                 state
-                 {:dispatcher dispatcher})
+(celeriac/subscribe store
+                    (fn [db]
+                      (println "db:" db)))
 
-;; Dispatch some values
-;; - corresponding handlers will be called async
-(celeriac/dispatch! dispatcher :foo "baz")
-(celeriac/dispatch! dispatcher :bar "qux")
+(celeriac/dispatch! store [:foo "baz"])
+(celeriac/dispatch! store [:bar "qux"])
 
 ;; Dev
 #_(repl-connect!)

@@ -3,4 +3,9 @@ celeriac
 
 [![Build Status](https://travis-ci.org/scttnlsn/celeriac.svg)](https://travis-ci.org/scttnlsn/celeriac)
 
-Opinionated structure and helpers for ClojureScript/Om applications.
+State management for ClojureScript applications.  Inspired by [Redux](https://github.com/rackt/redux) and [re-frame](https://github.com/Day8/re-frame).
+
+Examples:
+
+* [basic](https://github.com/scttnlsn/celeriac/blob/master/examples/basic/src/core.cljs)
+* [routing](https://github.com/scttnlsn/celeriac/blob/master/examples/routing/src/core.cljs)

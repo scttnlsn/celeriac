@@ -1,51 +1,46 @@
 (ns celeriac.core
-  (:require-macros [cljs.core.async.macros :refer [go alt!]])
-  (:require [cljs.core.async :as async :refer [chan merge mult pipe put! tap]]))
+  (:require-macros [cljs.core.async.macros :refer [go-loop]])
+  (:require [cljs.core.async :as async :refer [<! chan put!]]))
 
-(defn- wrap-handler [handler]
-  (fn [name value state opts]
-    (swap! state #(handler value % opts))))
+(defn dispatch! [{:keys [actions] :as store} action]
+  (put! actions action))
 
-(defn dispatcher [handlers]
-  (into {} (for [[name handler] handlers]
-             (let [ch (chan)]
-               [name {:ch ch
-                      :mult-ch (mult ch)
-                      :name name
-                      :handler (wrap-handler handler)}]))))
+(defn dispatch-sync! [{:keys [db handler subscribers] :as store} action]
+  (swap! db #(handler % action))
+  (doall (for [f @subscribers]
+           (f @db))))
 
-(defn channel [dispatcher name]
-  (get-in dispatcher [name :ch]))
+(defprotocol IHandleAction
+  (-handle-action! [action store]))
 
-(defn tap-channels [dispatcher]
-  (into {} (for [[_ {:keys [mult-ch] :as item}] dispatcher]
-             (let [tapped-ch (chan)]
-               (tap mult-ch tapped-ch)
-               [tapped-ch item]))))
+(extend-protocol IHandleAction
+  function
+  (-handle-action! [action store]
+    (action #(dispatch! store %)))
 
-(defn start!
-  ([dispatcher state]
-   (start! dispatcher state {}))
-  ([dispatcher state opts]
-   (let [channels (tap-channels dispatcher)]
-     (go
-       (while true
-         (let [[value ch] (alts! (keys channels))
-               {:keys [name handler]} (get channels ch)]
-           (handler name value state opts)))))))
+  default
+  (-handle-action! [action store]
+    (dispatch-sync! store action)))
 
-(defn dispatch! [dispatcher name value]
-  (let [ch (get-in dispatcher [name :ch])]
-    (put! ch value)))
+(defn start! [{:keys [actions] :as store}]
+  (go-loop []
+    (when-let [action (<! actions)]
+      (-handle-action! action store)
+      (recur)))
+  store)
 
-(defn listen [dispatcher name]
-  (let [mult-ch (get-in dispatcher [name :mult-ch])
-        ch (chan)]
-    (tap mult-ch ch)
-    ch))
+(defn create-store
+  ([handler]
+   (create-store handler {}))
+  ([handler initial-state]
+   (let [store {:actions (chan)
+                :db (atom initial-state)
+                :handler handler
+                :subscribers (atom [])}]
+     (start! store))))
 
-(defn listen-all [dispatcher]
-  (let [channels (for [name (keys dispatcher)]
-                   (pipe (listen dispatcher name)
-                         (chan 1 (map (fn [val] [name val])))))]
-    (merge (doall (reverse channels)))))
+(defn subscribe [{:keys [subscribers] :as store} f]
+  (swap! subscribers conj f))
+
+(defn get-state [{:keys [db] :as store}]
+  @db)

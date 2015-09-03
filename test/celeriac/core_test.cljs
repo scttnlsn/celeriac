@@ -1,45 +1,50 @@
 (ns celeriac.core-test
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [cljs.core.async :refer [<! timeout]]
-            [cljs.test :as test :refer-macros [async deftest is run-tests testing]]
+            [cljs.test :as test :refer-macros [async deftest is testing]]
             [celeriac.core :as celeriac]))
 
 (enable-console-print!)
 
-(defn- test-handler [value state]
-  (assoc state :value value))
+(defn- test-handler [db action]
+  (assoc db :foo (:foo action)))
 
-(deftest listen
-  (testing "it receives values dispatched to given channel"
+(deftest test-store
+  (testing "it dispatches and handles actions"
     (async done
-           (let [dispatcher (celeriac/dispatcher {:test test-handler})
-                 ch (celeriac/listen dispatcher :test)]
-             (go
-               (is (= (<! ch) :foo))
-               (done))
-             (celeriac/dispatch! dispatcher :test :foo)))))
+           (let [store (celeriac/create-store test-handler)]
+             (celeriac/subscribe store (fn [db]
+                                         (is (= db {:foo :bar}))
+                                         (done)))
+             (celeriac/dispatch! store {:foo :bar}))))
+  (testing "it handles async actions"
+    (async done
+           (let [store (celeriac/create-store test-handler)]
+             (celeriac/subscribe store (fn [db]
+                                         (is (= db {:foo :bar}))
+                                         (done)))
+             (celeriac/dispatch! store (fn [dispatch]
+                                         (go
+                                           (<! (timeout 10))
+                                           (dispatch {:foo :bar}))))))))
 
-(deftest listen-all
-  (testing "it receives values dispatched to any channel"
-    (async done
-           (let [dispatcher (celeriac/dispatcher {:a test-handler
-                                                  :b test-handler})
-                 ch (celeriac/listen-all dispatcher)]
-             (go
-               (is (= (<! ch) [:a :foo]))
-               (is (= (<! ch) [:b :bar]))
-               (done))
-             (celeriac/dispatch! dispatcher :a :foo)
-             (celeriac/dispatch! dispatcher :b :bar)))))
+(deftest test-store-initial-state
+  (testing "it initializes db"
+    (let [store (celeriac/create-store test-handler {:foo :bar})]
+      (is (= (celeriac/get-state store) {:foo :bar})))))
 
-(deftest start
-  (testing "it updates state atom with result of handler"
+(defn- test-middleware [handler]
+  (fn [db action]
+    (let [result (handler db action)]
+      (assoc result :middleware true))))
+
+(deftest test-store-middleware
+  (testing "it passes db and action through middleware"
     (async done
-           (let [state (atom {})
-                 dispatcher (celeriac/dispatcher {:test test-handler})]
-             (go
-               (<! (timeout 100))
-               (is (= (:value @state) :foo))
-               (done))
-             (celeriac/start! dispatcher state {})
-             (celeriac/dispatch! dispatcher :test :foo)))))
+           (let [store (celeriac/create-store (-> test-handler
+                                                  (test-middleware)))]
+             (celeriac/subscribe store (fn [db]
+                                         (is (= db {:middleware true
+                                                    :foo :bar}))
+                                         (done)))
+             (celeriac/dispatch! store {:foo :bar})))))
