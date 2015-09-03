@@ -33,8 +33,8 @@
   (fn [dispatch]
     (dispatch [:bar value])
     (go
-      (<! (timeout 3000))
-      (dispatch (foo value)))))
+      (<! (timeout 1000))
+      (dispatch (bar value)))))
 
 ;; --------------------------------------------------
 ;; Main
