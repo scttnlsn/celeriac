@@ -8,4 +8,5 @@ State management for ClojureScript applications inspired by [Redux](https://gith
 Examples:
 
 * [basic](https://github.com/scttnlsn/celeriac/blob/master/examples/basic/src/core.cljs)
+* [async](https://github.com/scttnlsn/celeriac/blob/master/examples/async/src/core.cljs)
 * [routing](https://github.com/scttnlsn/celeriac/blob/master/examples/routing/src/core.cljs)

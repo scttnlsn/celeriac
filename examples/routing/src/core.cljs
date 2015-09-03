@@ -1,11 +1,9 @@
 (ns examples.routing.core
-  (:require-macros [cljs.core.async.macros :refer [go-loop]])
-  (:require [cljs.core.async :refer [<! chan]]
-            [goog.events :as events]
-            [goog.history.EventType :as EventType]
-            [secretary.core :as secretary :refer-macros [defroute]]
-            [celeriac.core :as celeriac]
-            [celeriac.dev :refer [repl-connect!]])
+  (:require[goog.events :as events]
+           [goog.history.EventType :as EventType]
+           [secretary.core :as secretary :refer-macros [defroute]]
+           [celeriac.core :as celeriac]
+           [celeriac.dev :refer [repl-connect!]])
   (:import goog.History))
 
 (enable-console-print!)

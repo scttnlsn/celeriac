@@ -21,7 +21,10 @@
                         :source-map true
                         :optimizations :none}}
             {:id "examples"
-             :source-paths ["src" "examples/basic/src" "examples/routing/src"]
+             :source-paths ["src"
+                            "examples/basic/src"
+                            "examples/async/src"
+                            "examples/routing/src"]
              :compiler {:output-to "examples/out/examples.js"
                         :output-dir "examples/out"
                         :source-map true
